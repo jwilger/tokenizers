@@ -2,7 +2,7 @@ defmodule Tokenizers.Tokenizer do
   @moduledoc """
   The struct and associated functions for a tokenizer.
 
-  A `Tokenizers.Tokenizer.t()` is a container that holds the constituent parts of the tokenization pipeline.
+  A `Tokenizers.t()` is a container that holds the constituent parts of the tokenization pipeline.
 
   When you call `Tokenizers.Tokenizer.encode/3`, the input text goes through the following pipeline:
 
@@ -17,6 +17,7 @@ defmodule Tokenizers.Tokenizer do
   @type t :: %__MODULE__{resource: binary(), reference: reference()}
   defstruct resource: nil, reference: nil
 
+  alias Tokenizers.Encoding
   alias Tokenizers.Model
   alias Tokenizers.Native
   alias Tokenizers.Shared
@@ -58,7 +59,7 @@ defmodule Tokenizers.Tokenizer do
     * `:additional_special_tokens` - A list of special tokens to append to the tokenizer.
       Defaults to `[]`.
   """
-  @spec from_pretrained(String.t(), Keyword.t()) :: {:ok, Tokenizer.t()} | {:error, term()}
+  @spec from_pretrained(String.t(), Keyword.t()) :: {:ok, t()} | {:error, term()}
   def from_pretrained(identifier, opts \\ []) do
     opts =
       Keyword.validate!(opts,
@@ -167,7 +168,7 @@ defmodule Tokenizers.Tokenizer do
     * `:additional_special_tokens` - A list of special tokens to append to the tokenizer.
       Defaults to `[]`.
   """
-  @spec from_file(String.t(), Keyword.t()) :: {:ok, Tokenizer.t()} | {:error, term()}
+  @spec from_file(String.t(), Keyword.t()) :: {:ok, t()} | {:error, term()}
   def from_file(path, opts \\ []) do
     opts = Keyword.validate!(opts, additional_special_tokens: [])
     Native.from_file(path, opts[:additional_special_tokens])
@@ -176,7 +177,7 @@ defmodule Tokenizers.Tokenizer do
   @doc """
   Save the tokenizer to the provided path.
   """
-  @spec save(Tokenizer.t(), String.t()) :: {:ok, String.t()} | {:error, term()}
+  @spec save(t(), String.t()) :: {:ok, String.t()} | {:error, term()}
   def save(tokenizer, path) do
     case Native.save(tokenizer, path, true) do
       {:ok, _} -> {:ok, path}
@@ -192,7 +193,7 @@ defmodule Tokenizers.Tokenizer do
     * `:add_special_tokens` - whether to add special tokens to the encoding. Defaults to `true`.
 
   """
-  @spec encode(Tokenizer.t(), encode_input() | [encode_input()], Keyword.t()) ::
+  @spec encode(t(), encode_input() | [encode_input()], Keyword.t()) ::
           {:ok, Encoding.t() | [Encoding.t()]} | {:error, term()}
   def encode(tokenizer, input, opts \\ []) do
     add_special_tokens = Keyword.get(opts, :add_special_tokens, true)
@@ -214,7 +215,7 @@ defmodule Tokenizers.Tokenizer do
 
     * `:skip_special_tokens` - whether the special tokens should be removed from the decoded string. Defaults to `true`.
   """
-  @spec decode(Tokenizer.t(), non_neg_integer() | [non_neg_integer()], Keyword.t()) ::
+  @spec decode(t(), non_neg_integer() | [non_neg_integer()], Keyword.t()) ::
           {:ok, String.t() | [String.t()]} | {:error, term()}
   def decode(tokenizer, ids, opts \\ []) do
     skip_special_tokens = Keyword.get(opts, :skip_special_tokens, true)
@@ -230,31 +231,31 @@ defmodule Tokenizers.Tokenizer do
   @doc """
   Get the tokenizer's vocabulary as a map of token to id.
   """
-  @spec get_vocab(Tokenizer.t()) :: %{binary() => integer()}
+  @spec get_vocab(t()) :: %{binary() => integer()}
   def get_vocab(tokenizer), do: tokenizer |> Native.get_vocab(false) |> Shared.unwrap()
 
   @doc """
   Get the number of tokens in the vocabulary.
   """
-  @spec get_vocab_size(Tokenizer.t()) :: non_neg_integer()
+  @spec get_vocab_size(t()) :: non_neg_integer()
   def get_vocab_size(tokenizer), do: tokenizer |> Native.get_vocab_size(true) |> Shared.unwrap()
 
   @doc """
   Convert a given id to its token.
   """
-  @spec id_to_token(Tokenizer.t(), integer()) :: String.t()
+  @spec id_to_token(t(), integer()) :: String.t()
   def id_to_token(tokenizer, id), do: tokenizer |> Native.id_to_token(id) |> Shared.unwrap()
 
   @doc """
   Convert a given token to its id.
   """
-  @spec token_to_id(Tokenizer.t(), binary()) :: non_neg_integer()
+  @spec token_to_id(t(), binary()) :: non_neg_integer()
   def token_to_id(tokenizer, token), do: tokenizer |> Native.token_to_id(token) |> Shared.unwrap()
 
   @doc """
   Get the `Tokenizer`'s `Model`.
   """
-  @spec get_model(Tokenizer.t()) :: Model.t()
+  @spec get_model(t()) :: Model.t()
   def get_model(tokenizer), do: tokenizer |> Native.get_model() |> Shared.unwrap()
 end
 
